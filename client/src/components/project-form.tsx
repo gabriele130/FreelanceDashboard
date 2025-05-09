@@ -14,10 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Client, Project } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Project } from "@shared/schema";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -49,7 +49,7 @@ export function ProjectForm({ isOpen, onClose, initialData }: ProjectFormProps) 
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
@@ -68,10 +68,11 @@ export function ProjectForm({ isOpen, onClose, initialData }: ProjectFormProps) 
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Convert clientId to number
+      // Convert clientId to number and amount to decimal if provided
       const payload = {
         ...values,
         clientId: parseInt(values.clientId),
+        amount: values.amount ? values.amount : undefined,
       };
       
       if (isEditing && initialData) {
@@ -91,10 +92,34 @@ export function ProjectForm({ isOpen, onClose, initialData }: ProjectFormProps) 
       onClose();
       form.reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Project form error:", error);
+      
+      let errorMessage = "Si è verificato un errore";
+      if (error.message) {
+        errorMessage = `${errorMessage}: ${error.message}`;
+      }
+      
+      // Try to parse JSON errors if present
+      try {
+        if (error.message && error.message.includes('{')) {
+          const jsonStartIndex = error.message.indexOf('{');
+          const jsonStr = error.message.substring(jsonStartIndex);
+          const jsonError = JSON.parse(jsonStr);
+          
+          if (jsonError.errors && Array.isArray(jsonError.errors)) {
+            errorMessage = `Errore di validazione: ${jsonError.errors.map((e: any) => e.message).join(', ')}`;
+          } else if (jsonError.message) {
+            errorMessage = jsonError.message;
+          }
+        }
+      } catch (e) {
+        // If JSON parsing fails, use the original error message
+      }
+      
       toast({
         title: "Errore",
-        description: `Si è verificato un errore: ${error.message}`,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -151,7 +176,7 @@ export function ProjectForm({ isOpen, onClose, initialData }: ProjectFormProps) 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {clients.map((client: any) => (
+                      {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id.toString()}>
                           {client.name}
                         </SelectItem>

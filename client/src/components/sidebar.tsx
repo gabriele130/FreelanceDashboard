@@ -115,24 +115,8 @@ const Sidebar = () => {
                     <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
                       {item.section}
                     </p>
-                    <Link href={item.href}>
-                      <a
-                        className={`sidebar-item ${
-                          location === item.href
-                            ? "sidebar-item-active"
-                            : "sidebar-item-inactive"
-                        }`}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </a>
-                    </Link>
-                  </div>
-                );
-              } else {
-                acc.push(
-                  <Link key={`item-${index}`} href={item.href}>
-                    <a
+                    <Link 
+                      href={item.href}
                       className={`sidebar-item ${
                         location === item.href
                           ? "sidebar-item-active"
@@ -141,7 +125,22 @@ const Sidebar = () => {
                     >
                       {item.icon}
                       <span>{item.label}</span>
-                    </a>
+                    </Link>
+                  </div>
+                );
+              } else {
+                acc.push(
+                  <Link 
+                    key={`item-${index}`} 
+                    href={item.href}
+                    className={`sidebar-item ${
+                      location === item.href
+                        ? "sidebar-item-active"
+                        : "sidebar-item-inactive"
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
                   </Link>
                 );
               }

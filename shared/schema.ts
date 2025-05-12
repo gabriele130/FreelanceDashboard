@@ -39,7 +39,7 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  projectId: integer("project_id").references(() => projects.id).notNull(),
+  projectId: integer("project_id").references(() => projects.id),
   priority: taskPriorityEnum("priority").default('medium').notNull(),
   deadline: timestamp("deadline"),
   isCompleted: boolean("is_completed").default(false).notNull(),
@@ -82,7 +82,11 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
 }));
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
-  project: one(projects, { fields: [tasks.projectId], references: [projects.id] })
+  project: one(projects, { 
+    fields: [tasks.projectId], 
+    references: [projects.id],
+    relationName: 'taskProject'
+  })
 }));
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
@@ -106,7 +110,6 @@ export type Project = typeof projects.$inferSelect;
 
 export const taskInsertSchema = createInsertSchema(tasks, {
   title: (schema) => schema.min(2, "Title must be at least 2 characters"),
-  projectId: (schema) => schema.min(1, "Project must be selected")
 });
 export type TaskInsert = z.infer<typeof taskInsertSchema>;
 export type Task = typeof tasks.$inferSelect;

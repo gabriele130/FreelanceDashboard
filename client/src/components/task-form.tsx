@@ -30,9 +30,7 @@ const formSchema = z.object({
     message: "Il titolo deve essere di almeno 2 caratteri.",
   }),
   description: z.string().optional(),
-  projectId: z.string().min(1, {
-    message: "Seleziona un progetto.",
-  }),
+  projectId: z.string().optional(),
   priority: z.enum(["high", "medium", "low"]),
   deadline: z.date().optional(),
   isCompleted: z.boolean().default(false),
@@ -49,7 +47,7 @@ export function TaskForm({ isOpen, onClose, initialData }: TaskFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
 
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [] } = useQuery<any[]>({
     queryKey: ["/api/projects"],
   });
 
@@ -67,11 +65,24 @@ export function TaskForm({ isOpen, onClose, initialData }: TaskFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Convert projectId to number
-      const payload = {
-        ...values,
-        projectId: parseInt(values.projectId),
+      // Crea una copia dei valori
+      const valuesToSubmit = { ...values };
+      
+      // Crea un nuovo oggetto per il payload da inviare all'API
+      const payload: any = {
+        title: valuesToSubmit.title,
+        description: valuesToSubmit.description,
+        priority: valuesToSubmit.priority,
+        deadline: valuesToSubmit.deadline,
+        isCompleted: valuesToSubmit.isCompleted,
       };
+      
+      // Aggiungi projectId solo se è un valore valido
+      if (valuesToSubmit.projectId && valuesToSubmit.projectId.trim() !== "") {
+        payload.projectId = parseInt(valuesToSubmit.projectId);
+      } else {
+        payload.projectId = null;
+      }
       
       if (isEditing && initialData) {
         await apiRequest("PUT", `/api/tasks/${initialData.id}`, payload);
@@ -142,14 +153,18 @@ export function TaskForm({ isOpen, onClose, initialData }: TaskFormProps) {
               name="projectId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Progetto</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>Progetto (opzionale)</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleziona un progetto" />
+                        <SelectValue placeholder="Seleziona un progetto (opzionale)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="">Nessun progetto</SelectItem>
                       {projects.map((project: any) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.title}
@@ -158,6 +173,9 @@ export function TaskForm({ isOpen, onClose, initialData }: TaskFormProps) {
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                  <p className="text-sm text-muted-foreground">
+                    Puoi lasciare questo campo vuoto per creare un task indipendente
+                  </p>
                 </FormItem>
               )}
             />

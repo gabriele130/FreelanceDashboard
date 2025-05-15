@@ -1,6 +1,53 @@
-node_modules
-dist
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build e dist
+/build
+/dist
+
+# Environment e dati sensibili
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+
+# Replit specifici
+.replit
+replit.nix
+.config/
+.cache/
+.breakpoints
+.upm/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Log
+logs
+*.log
+
+# Cache npm
+.npm
+
+# Directory di dipendenze
+/.pnp
+.pnp.js
+
+# Coverage directory
+/coverage
+
+# File temporanei
+.tmp
+.temp
+
+# Drizzle
+.drizzle/
+drizzle/
